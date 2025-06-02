@@ -1,4 +1,5 @@
 const { ethers } = require("hardhat");
+const config = require("../constant/config");
 // Uncomment to Save deployment info locally (optional)
 // const fs = require("fs");
 // const path = require("path");
@@ -20,6 +21,13 @@ async function deployNFT(signer) {
     await nft.waitForDeployment();
     const address = await nft.getAddress();
     console.log(`✅  NFT contract deployed at: ${address}`);
+
+    // Confirm contract exists
+    const code = await signer.provider.getCode(address);
+    if (code === "0x") {
+      console.error("❌ Deployment failed, contract not found on-chain");
+    return;
+    }
 
     // Mint 1 NFT to the signer's address
     const userAddress = await signer.getAddress();
@@ -66,7 +74,7 @@ async function deployNFT(signer) {
 
     return address;
   } catch (error) {
-    console.error("❌ Error during deployNFT:", error);
+    console.error("❌ Error during deployNFT: Still have ongoing transaction" || error.message);
     throw error;
   }
 }

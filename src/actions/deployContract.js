@@ -17,7 +17,7 @@ async function deployContract() {
 
     return { address, txHash: tx.hash };
   } catch (error) {
-    console.error("❌ Error deploying DummyContract:", error);
+    console.error("❌ Deployment failed: There are still ongoing transactions.", error);
     throw error;
   }
 }

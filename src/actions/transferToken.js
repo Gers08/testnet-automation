@@ -24,13 +24,16 @@ async function transferToken(wallet) {
     }
 
     const senderAddress = await wallet.getAddress();
-    const balance = await wallet.getBalance();
+    const balance = await wallet.provider.getBalance(senderAddress);
 
-    const gasPrice = await wallet.provider.getGasPrice();
-    const totalCost = amount.add(config.GAS_LIMIT * gasPrice);
+    const { gasPrice } = await wallet.provider.getFeeData(); 
+    const gasLimit = BigInt(config.GAS_LIMIT);
+    const totalCost = amount + gasLimit * gasPrice;
 
     if (balance < totalCost) {
-      throw new Error(`Insufficient balance. Balance: ${ethers.formatEther(balance)} PHRS, required (amount + gas): ${ethers.utils.formatEther(totalCost)} PHRS`);
+      throw new Error(
+        `Insufficient balance. Balance: ${ethers.formatEther(balance)} PHRS, required (amount + gas): ${ethers.formatEther(totalCost)} PHRS`
+      );
     }
 
     console.log(`Sending ${config.TRANSFER_AMOUNT_PHRS} PHRS from ${senderAddress} to ${transferToAddress}...`);
@@ -38,7 +41,7 @@ async function transferToken(wallet) {
     const tx = await wallet.sendTransaction({
       to: transferToAddress,
       value: amount,
-      gasLimit: config.GAS_LIMIT || undefined,
+      gasLimit,
       gasPrice,
     });
 

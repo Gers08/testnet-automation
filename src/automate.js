@@ -2,8 +2,7 @@ const { ethers } = require("hardhat");
 const config = require("./constant/config");
 const crypto = require('crypto');
 const { parseUnits, formatUnits } = require("ethers");
-const { swapOnly } = require("./actions/swapToken");
-const { transferToken, deployToken, deployNFT, deployContract } = require("./actions");
+const { transferToken, deployToken, deployNFT, deployContract, swapToken } = require("./actions");
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -44,7 +43,7 @@ async function simulateAction(signer) {
 
   switch (choice) {
     case "Swap":
-      await swapOnly({ signer });
+      await swapToken();
       break;
     case "TransferToken":
       await transferToken(signer);

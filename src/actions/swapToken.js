@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const { ethers } = require("ethers");
 const { parseUnits, formatUnits } = require("ethers");
 const addresses = require("../constant/addresses");
 const config = require("../constant/config");
@@ -51,7 +51,7 @@ async function performSwap(uniswap, amount, token, user, label) {
 }
 
 // Main swap function
-async function swapOnly() {
+async function swapToken() {
   try {
     const [user] = await ethers.getSigners();
 
@@ -83,8 +83,8 @@ async function swapOnly() {
     }
 
   } catch (error) {
-    console.error("❌ Error in swapOnly:", error.message || error);
+    console.error("❌ Error in swapToken:", error.message || error);
   }
 }
 
-module.exports = { swapOnly };
+module.exports = swapToken;
