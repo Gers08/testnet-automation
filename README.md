@@ -39,8 +39,8 @@ Run all tasks automatically with configurable frequencies and weights.
 ### 1. Clone this repository and install dependencies
 
 ```bash
-git clone <your-repo-url>
-cd <repo-directory>
+git clone https://github.com/Gers08/testnet-automation.git
+cd testnet-automation
 npm install
 ```
 
