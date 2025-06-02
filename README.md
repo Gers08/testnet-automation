@@ -67,7 +67,7 @@ ACTION_WEIGHTS: {
 
 ```js
 TRANSFER_RECIPIENTS: [
-    "0xfec777a6df10e64bfdc7d5ae80a50627cf284163",
+    "",
     // add more addresses as needed
 ],
 ```
