@@ -1,0 +1,57 @@
+const { ethers } = require("ethers");
+const config = require("../constant/config");
+const addresses = require("../constant/addresses");
+
+function getRandomAddress() {
+  const recipients = addresses.TRANSFER_RECIPIENTS;
+  const randomIndex = Math.floor(Math.random() * recipients.length);
+  return recipients[randomIndex];
+}
+
+async function transferToken(wallet) {
+  const transferToAddress = getRandomAddress();
+
+  try {
+    if (!ethers.isAddress(transferToAddress)) {
+      throw new Error(`Invalid recipient address: ${transferToAddress}`);
+    }
+
+    let amount;
+    try {
+      amount = ethers.parseEther(config.TRANSFER_AMOUNT_PHRS);
+    } catch {
+      throw new Error(`Invalid amount format: ${config.TRANSFER_AMOUNT_PHRS}`);
+    }
+
+    const senderAddress = await wallet.getAddress();
+    const balance = await wallet.getBalance();
+
+    const gasPrice = await wallet.provider.getGasPrice();
+    const totalCost = amount.add(config.GAS_LIMIT * gasPrice);
+
+    if (balance < totalCost) {
+      throw new Error(`Insufficient balance. Balance: ${ethers.formatEther(balance)} PHRS, required (amount + gas): ${ethers.utils.formatEther(totalCost)} PHRS`);
+    }
+
+    console.log(`Sending ${config.TRANSFER_AMOUNT_PHRS} PHRS from ${senderAddress} to ${transferToAddress}...`);
+
+    const tx = await wallet.sendTransaction({
+      to: transferToAddress,
+      value: amount,
+      gasLimit: config.GAS_LIMIT || undefined,
+      gasPrice,
+    });
+
+    console.log(`Transaction sent. Tx hash: ${tx.hash}`);
+    await tx.wait();
+    console.log(`Transaction confirmed!`);
+
+    return tx.hash;
+
+  } catch (error) {
+    console.error("Error sending PHRS:", error.message || error);
+    throw error;
+  }
+}
+
+module.exports = transferToken;
