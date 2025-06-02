@@ -1,4 +1,4 @@
-const { ethers } = require("ethers");
+const { ethers } = require("hardhat");
 const { parseUnits, formatUnits } = require("ethers");
 const addresses = require("../constant/addresses");
 const config = require("../constant/config");
