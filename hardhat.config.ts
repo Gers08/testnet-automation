@@ -8,7 +8,7 @@ const config: HardhatUserConfig = {
   solidity: "0.8.28",
   networks: {
     pharos: {
-      url: configs.RPC_URL || "",
+      url: configs.RPC_URL || configs.WSS_URL,
       chainId: Number(configs.CHAIN_ID) || 688688,
       accounts: [process.env.PRIVATE_KEY || ""],
     },

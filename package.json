@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "automate-pharos": "npx hardhat run src/automate.js --network pharos",
+    "add-liquidity-pool": "npx hardhat run src/add-liquidity.js --network pharos",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

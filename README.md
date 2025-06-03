@@ -30,7 +30,7 @@ Run all tasks automatically with configurable frequencies and weights.
 - Node.js v16+
 - npm
 - Access to Pharos Testnet RPC endpoint
-- Wallet private key with testnet funds
+- A funded testnet wallet (PHRS, USDT, USDC)
 
 ---
 
@@ -51,7 +51,7 @@ USER_ADDRESS=your-wallet-address
 PRIVATE_KEY=your-wallet-private-key
 ```
 
-### 3. Configure action weights in `src/constant/config.js` to adjust task frequencies:
+### 3. Configure the automation behavior in src/constant/config.js:
 
 ```js
 ACTION_WEIGHTS: {
@@ -61,9 +61,19 @@ ACTION_WEIGHTS: {
     DeployNFT: 1,        // 1%
     DeployContract: 1,   // 1%
 },
+
+AMOUNT_OF_LIQIUDITY: 200, // amount of liquidity to add to the pool (both USDT and USDC)
+    SWAP_MIN_AMOUNT: 1,    // minimum token amount to swap
+    SWAP_MAX_AMOUNT: 10,   // maximum token amount to swap
 ```
 
-### 4. Add transfer recipient addresses in `src/constant/addresses.js`:
+### 4. Add Liquidity Pool Addresses in `src/constant/addresses.js`:
+
+```bash
+npm run add-liquidity-pool
+```
+
+### 5. Add transfer recipient addresses in `src/constant/addresses.js`:
 
 ```js
 TRANSFER_RECIPIENTS: [
@@ -72,7 +82,7 @@ TRANSFER_RECIPIENTS: [
 ],
 ```
 
-### 5. Start the automation script:
+### 6. Start the automation script:
 
 ```bash
 npm run automate-pharos
@@ -82,10 +92,17 @@ npm run automate-pharos
 
 ## Notes
 
-- Ensure your wallet has enough testnet funds for gas and operations.
+- Ensure your wallet has enough testnet funds (PHRS, USDC, USDT) for gas and operations.
 - Keep your `.env` file secure and never commit it to version control.
 - Designed for Pharos testnet only — do **not** use mainnet keys or endpoints.
 
 ---
 
-Feel free to open issues or contribute!
+🤝 Contributing
+Want to improve this tool or add new actions?
+Pull requests and issues are welcome!
+
+---
+
+📄 License
+MIT License © 2025 Gers08

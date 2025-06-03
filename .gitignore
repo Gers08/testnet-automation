@@ -2,7 +2,6 @@ node_modules
 .env
 
 /src/deployed-assets
-add-liquidity.js
 
 # Hardhat files
 /cache

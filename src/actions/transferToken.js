@@ -53,7 +53,6 @@ async function transferToken(wallet) {
 
   } catch (error) {
     console.error("Error sending PHRS:", error.message || error);
-    throw error;
   }
 }
 
