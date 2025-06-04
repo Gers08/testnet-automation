@@ -1,6 +1,7 @@
 const { ethers } = require("hardhat");
 const config = require("./constant/config");
 const crypto = require('crypto');
+const retry = require("../src/helper/retry");
 const { parseUnits, formatUnits } = require("ethers");
 const { transferToken, deployToken, deployNFT, deployContract, swapToken } = require("./actions");
 
@@ -68,12 +69,9 @@ async function main() {
     console.log(`\n🔁 Round ${round++} starting...`);
 
     try {
-      await simulateAction(signer);
+      await retry(() => simulateAction(signer));
     } catch (err) {
       console.error("⚠️ Action failed:", err.message);
-      const retryDelay = getRandomDelay(15_000, 30_000); // 15–30s
-      console.log(`🛠 Waiting ${(retryDelay / 1000).toFixed(2)}s before retry...\n`);
-      await sleep(retryDelay);
     }
 
     const delay = getRandomDelay();
