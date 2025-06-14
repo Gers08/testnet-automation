@@ -29,32 +29,35 @@ async function approveIfNeeded(tokenContract, spender, user) {
   }
 }
 
-async function addLiquidityIfNeeded() {
+async function addLiquidity() {
   try {
     const [deployer] = await ethers.getSigners();
     if (!deployer) throw new Error("❌ No signer available.");
 
     const Token = await ethers.getContractFactory("Token");
-    const Uniswap = await ethers.getContractFactory("Uniswap");
+    const Uniswap = await ethers.getContractFactory("UniswapPool");
 
-    const USDT = Token.attach(addresses.USDT);
-    const USDC = Token.attach(addresses.USDC);
-    const uniswap = Uniswap.attach(addresses.SWAP_ROUTER);
+    const ASSET_ONE = Token.attach(addresses.ASSET_ONE);
+    const ASSET_TWO = Token.attach(addresses.ASSET_TWO);
+    const uniswap = Uniswap.attach(addresses.UniswapPool);
 
-    if (!USDT || !USDC || !uniswap) throw new Error("❌ Invalid contract attachments.");
+    if (!ASSET_ONE || !ASSET_TWO || !uniswap) throw new Error("❌ Invalid contract attachments.");
 
-    const amount = config.AMOUNT_OF_LIQIUDITY;
-    const amountA = parseUnits(amount, 18); // USDT
-    const amountB = parseUnits(amount, 18); // USDC
+    const decimalsOne = await ASSET_ONE.decimals();
+    const decimalsTwo = await ASSET_TWO.decimals();
+
+    const amount = config.AMOUNT_OF_LIQUIDITY.toString();
+    const amountOfASSET_ONE = parseUnits(amount, decimalsOne); // ASSET_ONE
+    const amountOfASSET_TWO = parseUnits(amount, decimalsTwo); // ASSET_TWO
 
     console.log(`\n👤 Using signer: ${deployer.address}`);
     console.log("🔍 Validating approvals...");
 
-    await approveIfNeeded(USDT, uniswap, deployer);
-    await approveIfNeeded(USDC, uniswap, deployer);
+    await approveIfNeeded(ASSET_ONE, uniswap, deployer);
+    await approveIfNeeded(ASSET_TWO, uniswap, deployer);
 
-    console.log(`🔄 Adding liquidity: ${formatUnits(amountA)} USDT and ${formatUnits(amountB)} USDC...`);
-    const tx = await uniswap.connect(deployer).addLiquidity(amountA, amountB);
+    console.log(`🔄 Adding liquidity: ${formatUnits(amountOfASSET_ONE, decimalsOne)} ASSET_ONE and ${formatUnits(amountOfASSET_TWO, decimalsTwo)} ASSET_TWO ...`);
+    const tx = await uniswap.connect(deployer).addLiquidity(amountOfASSET_ONE, amountOfASSET_TWO);
     await tx.wait();
 
     console.log("✅ Liquidity added successfully.\n");
@@ -64,4 +67,4 @@ async function addLiquidityIfNeeded() {
   }
 }
 
-addLiquidityIfNeeded();
+addLiquidity();

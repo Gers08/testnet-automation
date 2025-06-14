@@ -3,51 +3,24 @@ const { parseUnits, formatUnits } = require("ethers");
 const addresses = require("../constant/addresses");
 const config = require("../constant/config");
 
-const MAX_UINT = ethers.MaxUint256;
-
-// Action Delay
-function getRandomSwapAmount(min = config.SWAP_MIN_AMOUNT, max = config.SWAP_MAX_AMOUNT) {
+// Get random amount to swap
+async function getRandomSwapAmount(token, min = config.SWAP_MIN_AMOUNT, max = config.SWAP_MAX_AMOUNT) {
+  const decimals = await token.decimals();
   const amount = Math.floor(Math.random() * (max - min + 1)) + min;
-  return parseUnits(amount.toString(), 18);
+  return parseUnits(amount.toString(), decimals);
 }
 
-// Approve once with unlimited allowance
-async function approveOnce(token, spender, user) {
-  const spenderAddress = await spender.getAddress();
-  const decimals = await token.decimals();
-  const allowance = await token.allowance(user.address, spenderAddress);
-
-  if (parseFloat(formatUnits(allowance, decimals)) > 0) return;
-
-  console.log(`🔐 Approving unlimited allowance to ${spenderAddress}...`);
-  const tx = await token.approve(spenderAddress, MAX_UINT);
-  await tx.wait();
-  console.log("✅ Unlimited approval successful.");
-}
-
-// Swap logic
-async function performSwap(uniswap, amount, token, user, label) {
-  const balance = await token.balanceOf(user.address);
-  const decimals = await token.decimals();
-
-  if (balance < amount) {
-    console.log(`❌ Insufficient ${label} for swap.`);
-    return;
-  }
-
-  await approveOnce(token, uniswap, user);
-
-  const nonce = await user.provider.getTransactionCount(user.address);
-  if (label === "USDT") {
-    const tx = await uniswap.swapAToB(amount, { nonce });
+// Approve if needed
+async function approveIfNeeded(token, spender, user, amount) {
+  const allowance = await token.allowance(user.address, spender);
+  if (allowance < amount) {
+    console.log(`🔐 Approving ${spender} to spend ${await token.symbol()}...`);
+    const tx = await token.connect(user).approve(spender, ethers.MaxUint256);
     await tx.wait();
+    console.log("✅ Approval successful.");
   } else {
-    const tx = await uniswap.swapBToA(amount, { nonce });
-    await tx.wait();
+    console.log(`✅ ${await token.symbol()} already approved.`);
   }
-
-  console.log(`✅ Swapped ${formatUnits(amount, decimals)} ${label}`);
-  console.log(`💰 ${label} Balance: ${formatUnits(balance, decimals)}`);
 }
 
 // Main swap function
@@ -56,34 +29,46 @@ async function swapToken() {
     const [user] = await ethers.getSigners();
 
     const Token = await ethers.getContractFactory("Token");
-    const USDT = Token.attach(addresses.USDT);
-    const USDC = Token.attach(addresses.USDC);
+    const ASSET_ONE = Token.attach(addresses.ASSET_ONE);
+    const ASSET_TWO = Token.attach(addresses.ASSET_TWO);
 
-    const Uniswap = await ethers.getContractFactory("Uniswap");
-    const uniswap = Uniswap.attach(addresses.SWAP_ROUTER);
+    const Pool = await ethers.getContractFactory("UniswapPool");
+    const uniswap = Pool.attach(addresses.UniswapPool);
 
-    const [reserveA, reserveB] = await uniswap.getReserves();
-    const reserveANum = parseFloat(formatUnits(reserveA, 18));
-    const reserveBNum = parseFloat(formatUnits(reserveB, 18));
+    const decimalsOne = await ASSET_ONE.decimals();
+    const decimalsTwo = await ASSET_TWO.decimals();
+
+    const [assetTwoReserve, assetOneReserve] = await uniswap.getReserves();
+    const assetTwoReserveAmount = parseFloat(formatUnits(assetTwoReserve, decimalsTwo));
+    const assetOneReserveAmount = parseFloat(formatUnits(assetOneReserve, decimalsOne));
     const targetRatio = 1;
 
-    const ratio = reserveANum / reserveBNum;
+    const ratio = assetTwoReserveAmount / assetOneReserveAmount;
     const differencePercent = Math.abs(ratio - targetRatio) / targetRatio * 100;
 
-    const amountToSwap = getRandomSwapAmount();
+    // Choose which asset to swap and use its decimals
+    const isImbalanced = differencePercent > 10;
+    const shouldUseAssetTwo = assetTwoReserveAmount > assetOneReserveAmount;
+    const tokenToSwap = isImbalanced ? (shouldUseAssetTwo ? ASSET_TWO : ASSET_ONE) : ASSET_ONE;
+    const decimalsToUse = tokenToSwap === ASSET_ONE ? decimalsOne : decimalsTwo;
+    const label = await tokenToSwap.symbol();
 
-    if (differencePercent > 10) {
-      if (reserveANum > reserveBNum) {
-        await performSwap(uniswap, amountToSwap, USDC, user, "USDC");
-      } else {
-        await performSwap(uniswap, amountToSwap, USDT, user, "USDT");
-      }
-    } else {
-      await performSwap(uniswap, amountToSwap, USDT, user, "USDT");
+    const amountToSwap = await getRandomSwapAmount(tokenToSwap, config.SWAP_MIN_AMOUNT, config.SWAP_MAX_AMOUNT);
+
+    const balance = await tokenToSwap.balanceOf(user.address);
+    if (balance < amountToSwap) {
+      console.log(`❌ Insufficient ${label} for swap.`);
+      return;
     }
 
+    await approveIfNeeded(tokenToSwap, addresses.UniswapPool, user, amountToSwap);
+
+    console.log(`🔁 Swapping ${formatUnits(amountToSwap, decimalsToUse)} ${label} ...`);
+    const tx = await uniswap.swap(await tokenToSwap.getAddress(), amountToSwap);
+    await tx.wait();
+    console.log(`✅ Succecssfully swapped ${formatUnits(amountToSwap, decimalsToUse)} ${label}. Balance after swap: ${formatUnits(await tokenToSwap.balanceOf(user.address), decimalsToUse)}`);
   } catch (error) {
-    console.error("❌ Error in swapToken:", error.message || error);
+    console.error("❌ Error in swapToken:", error || error);
   }
 }
 

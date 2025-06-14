@@ -17,7 +17,7 @@
     RANDOM_DELAY_MIN_MS: 25_000, // 25 seconds - minimum delay between actions
     RANDOM_DELAY_MAX_MS: 95_000, // 95 seconds - maximum delay between actions
 
-    AMOUNT_OF_LIQIUDITY: 200, // amount of liquidity to add to the pool (both USDT and USDC)
+    AMOUNT_OF_LIQUIDITY: 200, // amount of liquidity to add to the pool (both tokens)
     SWAP_MIN_AMOUNT: 1,    // minimum token amount to swap
     SWAP_MAX_AMOUNT: 10,   // maximum token amount to swap
 
